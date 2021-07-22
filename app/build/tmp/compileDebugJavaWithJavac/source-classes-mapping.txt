@@ -1,0 +1,6 @@
+com/example/newpomodorotimer/BuildConfig.java
+ com.example.newpomodorotimer.BuildConfig
+com/example/newpomodorotimer/databinding/TimerItemBinding.java
+ com.example.newpomodorotimer.databinding.TimerItemBinding
+com/example/newpomodorotimer/databinding/ActivityMainBinding.java
+ com.example.newpomodorotimer.databinding.ActivityMainBinding

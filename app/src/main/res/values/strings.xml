@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">NewPomodoroTimer</string>
+    <string name="default_time">00:00:00</string>
+
 </resources>
