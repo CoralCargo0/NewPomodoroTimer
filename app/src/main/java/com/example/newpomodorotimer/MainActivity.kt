@@ -3,6 +3,7 @@ package com.example.newpomodorotimer
 import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -38,6 +39,9 @@ class MainActivity : AppCompatActivity(), TimerListener {
 
     override fun stop(id: Int, currentMs: Long) {
         changeStopwatch(id, currentMs, false)
+        timers.find {
+            it.id == id
+        }?.timerCountDown?.cancel()
     }
 
     override fun delete(id: Int) {
@@ -50,8 +54,14 @@ class MainActivity : AppCompatActivity(), TimerListener {
     }
 
     override fun addNewTimer() {
-        timers.add(Timer(nextId++, time, time, false))
+        timers.add(Timer(nextId++, time, false))
         timerAdapter.submitList(timers.toList())
+    }
+
+    override fun set(co: CountDownTimer, id: Int) {
+        timers.find {
+            it.id == id
+        }?.timerCountDown = co
     }
 
     override fun playSong() {
@@ -63,7 +73,7 @@ class MainActivity : AppCompatActivity(), TimerListener {
         val newTimers = mutableListOf<Timer>()
         timers.forEach {
             if (it.id == id) {
-                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, it.leftTime, isStarted))
+                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, isStarted))
             } else {
                 newTimers.add(it)
             }

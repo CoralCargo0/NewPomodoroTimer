@@ -33,7 +33,13 @@ class TimerViewHolder(
             if (timer.isEnable) {
                 listener.stop(timer.id, timer.leftTime)
             } else {
-                listener.start(timer)
+                if(timer.leftTime <= 0) {
+                    listener.toastNotification("This timer is over!")
+                    listener.delete(timer.id)
+                } else
+                {
+                    listener.start(timer)
+                }
             }
         }
 
@@ -45,34 +51,29 @@ class TimerViewHolder(
         val drawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_pause_24, null)
         setDraw(drawable)
 
-        timerr?.cancel()
-        timerr = getCountDownTimer(timer)
-        timerr?.start()
+        getCountDownTimer(timer).let {
+            timer.timerCountDown = it
+            listener.set(it, timer.id)
+            it.start()
+        }
+
+//        timer.timerCountDown?.cancel()
+//        timer.timerCountDown = getCountDownTimer(timer)
+//        timer.timerCountDown?.start()
 
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
     }
 
-    private fun setDraw(drawable: Drawable?) {
-        binding.apply {
-            startPauseButton.setImageDrawable(drawable)
-            startPauseButton.setColorFilter(
-                R.color.black, PorterDuff.Mode.SRC_IN
-            )
-            deleteButton.setColorFilter(
-                R.color.black, PorterDuff.Mode.SRC_IN
-            )
-        }
-    }
+
 
     private fun stopTimer(timer: Timer) {
         val drawable = ResourcesCompat.getDrawable(
             resources,
             R.drawable.ic_baseline_play_arrow_24, null
         )
-
         setDraw(drawable)
-
+        timer.timerCountDown?.cancel()
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
     }
@@ -98,7 +99,7 @@ class TimerViewHolder(
     }
 
     private fun getCountDownTimer(timer: Timer): CountDownTimer {
-        return object : CountDownTimer(PERIOD, UNIT_S) {
+        return object : CountDownTimer(timer.leftTime, UNIT_S) {
             val interval = UNIT_S
 
             override fun onTick(millisUntilFinished: Long) {
@@ -109,17 +110,29 @@ class TimerViewHolder(
                 }
                 binding.stopwatchTimer.text = timer.leftTime.displayTime()
             }
+
             override fun onFinish() {
                 binding.stopwatchTimer.text = timer.leftTime.displayTime()
             }
         }
     }
 
+    private fun setDraw(drawable: Drawable?) {
+        binding.apply {
+            startPauseButton.setImageDrawable(drawable)
+            startPauseButton.setColorFilter(
+                R.color.black, PorterDuff.Mode.SRC_IN
+            )
+            deleteButton.setColorFilter(
+                R.color.black, PorterDuff.Mode.SRC_IN
+            )
+        }
+    }
 
     private companion object {
 
         private const val START_TIME = "00:00:00"
-        private const val UNIT_S = 10L
+        private const val UNIT_S = 1000L
         private const val PERIOD = 1000L * 60L * 60L * 24L // Day
     }
 
