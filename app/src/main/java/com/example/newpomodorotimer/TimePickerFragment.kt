@@ -26,8 +26,7 @@ class TimePickerFragment : DialogFragment(), TimePickerDialog.OnTimeSetListener 
 
     override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
         timePasser.apply {
-            qwerty(hourOfDay, minute)
-            addNewTimer()
+            addNewTimer(((hourOfDay * 60 + minute) * 60000).toLong())
         }
 
     }

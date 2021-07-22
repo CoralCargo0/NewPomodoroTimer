@@ -16,7 +16,7 @@ class TimerViewHolder(
     private val resources: Resources
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    private var timerr: CountDownTimer? = null
+   private var timerr: CountDownTimer? = null
 
     fun bind(timer: Timer) {
         binding.stopwatchTimer.text = timer.leftTime.displayTime()
@@ -33,11 +33,10 @@ class TimerViewHolder(
             if (timer.isEnable) {
                 listener.stop(timer.id, timer.leftTime)
             } else {
-                if(timer.leftTime <= 0) {
+                if (timer.leftTime <= 0) {
                     listener.toastNotification("This timer is over!")
                     listener.delete(timer.id)
-                } else
-                {
+                } else {
                     listener.start(timer)
                 }
             }
@@ -51,20 +50,18 @@ class TimerViewHolder(
         val drawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_baseline_pause_24, null)
         setDraw(drawable)
 
-        getCountDownTimer(timer).let {
-            timer.timerCountDown = it
-            listener.set(it, timer.id)
-            it.start()
-        }
-
-//        timer.timerCountDown?.cancel()
-//        timer.timerCountDown = getCountDownTimer(timer)
-//        timer.timerCountDown?.start()
+//        getCountDownTimer(timer).let {
+//            timer.timerCountDown = it
+//            listener.set(it, timer.id)
+//            it.start()
+//        }
+        timerr?.cancel()
+        timerr = getCountDownTimer(timer)
+        timerr?.start()
 
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
     }
-
 
 
     private fun stopTimer(timer: Timer) {
@@ -73,7 +70,7 @@ class TimerViewHolder(
             R.drawable.ic_baseline_play_arrow_24, null
         )
         setDraw(drawable)
-        timer.timerCountDown?.cancel()
+        timerr?.cancel()  ///timer.timerCountDown?.cancel()
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
     }
@@ -103,7 +100,7 @@ class TimerViewHolder(
             val interval = UNIT_S
 
             override fun onTick(millisUntilFinished: Long) {
-                timer.leftTime -= interval
+                timer.leftTime = millisUntilFinished
                 if (timer.leftTime <= 0L) {
                     listener.playSong()
                     stopTimer(timer)

@@ -15,7 +15,6 @@ class MainActivity : AppCompatActivity(), TimerListener {
     private val timerAdapter = TimerAdapter(this)
     private val timers = mutableListOf<Timer>()
     private var nextId = 0
-    private var time = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,14 +33,14 @@ class MainActivity : AppCompatActivity(), TimerListener {
     }
 
     override fun start(timer: Timer) {
-        changeStopwatch(timer.id, null, true)
+        changeStopwatch(timer.id, timer.leftTime, true)
     }
 
     override fun stop(id: Int, currentMs: Long) {
         changeStopwatch(id, currentMs, false)
-        timers.find {
-            it.id == id
-        }?.timerCountDown?.cancel()
+//        timers.find {
+//            it.id == id
+//        }?.timerCountDown?.cancel()
     }
 
     override fun delete(id: Int) {
@@ -49,25 +48,20 @@ class MainActivity : AppCompatActivity(), TimerListener {
         timerAdapter.submitList(timers.toList())
     }
 
-    override fun qwerty(hour: Int, minute: Int) {
-        time = ((hour * 60 + minute) * 60000).toLong()
-    }
 
-    override fun addNewTimer() {
-        timers.add(Timer(nextId++, time, false))
+
+    override fun addNewTimer(time: Long) {
+        timers.add(Timer(nextId++, time, false /*TimerViewHolder(binding, timelistener, binding.root.context.resources).getCountqwertyDownTimer(time))*/))
         timerAdapter.submitList(timers.toList())
     }
 
     override fun set(co: CountDownTimer, id: Int) {
-        timers.find {
-            it.id == id
-        }?.timerCountDown = co
+//        timers.find {
+//            it.id == id
+//        }?.timerCountDown = co
     }
 
-    override fun playSong() {
-        val song: MediaPlayer = MediaPlayer.create(this, R.raw.message)
-        song.start()
-    }
+
 
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
         val newTimers = mutableListOf<Timer>()
@@ -81,6 +75,11 @@ class MainActivity : AppCompatActivity(), TimerListener {
         timerAdapter.submitList(newTimers)
         timers.clear()
         timers.addAll(newTimers)
+    }
+
+    override fun playSong() {
+        val song: MediaPlayer = MediaPlayer.create(this, R.raw.message)
+        song.start()
     }
 
     override fun toastNotification(text: String) {
