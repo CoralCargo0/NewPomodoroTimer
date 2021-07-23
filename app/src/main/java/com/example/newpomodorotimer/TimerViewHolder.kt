@@ -18,12 +18,10 @@ class TimerViewHolder(
 
     private var timerr: CountDownTimer? = null
     fun bind(timer: Timer) {
-        updateAnimation(timer)
         binding.stopwatchTimer.text = timer.leftTime.displayTime()
-
         if (timer.isEnable) {
             startTimer(timer)
-        } else stopTimer(timer)
+        } else totalTimerStop(timer)
 
         initButtonsListeners(timer)
     }
@@ -31,7 +29,7 @@ class TimerViewHolder(
     private fun initButtonsListeners(timer: Timer) {
         binding.startPauseButton.setOnClickListener {
             if (timer.isEnable) {
-                listener.stop(timer.id, timer.leftTime)
+                totalTimerStop(timer)
             } else {
                 if (timer.leftTime <= 0) {
                     listener.toastNotification("This timer is over!")
@@ -42,7 +40,10 @@ class TimerViewHolder(
             }
         }
 
-        binding.deleteButton.setOnClickListener { listener.delete(timer.id) }
+        binding.deleteButton.setOnClickListener {
+            totalTimerStop(timer)
+            listener.delete(timer.id)
+        }
     }
 
     private fun startTimer(timer: Timer) {
@@ -55,10 +56,15 @@ class TimerViewHolder(
 //            listener.set(it, timer.id)
 //            it.start()
 //        }
-        val calop = listener.tryiop(timer.id)
+         val calop = listener.tryiop(timer.id)
         if (calop != -1) {
+            timerr?.cancel()
             listener.stop(calop, null)
         }  ///////////////////////////////
+//        val calop = listener.tryiopert(timer)
+//        if (calop != null && calop.id != timer.id) totalTimerStop(calop)
+
+
         updateAnimation(timer)
 
         timerr?.cancel()
@@ -83,44 +89,32 @@ class TimerViewHolder(
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
     }
 
-    private fun Long.displayTime(): String {
-        if (this <= 0L) {
-            return START_TIME
-        }
-        val h = this / 3600000
-        val m = (this / 60000) % 60
-        val s = this / 1000 % 60
-        // val ms = this % 1000 / 10
-
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}"
-    }
-
-    private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
-            "$count"
-        } else {
-            "0$count"
-        }
-    }
 
     private fun getCountDownTimer(timer: Timer): CountDownTimer {
-        return object : CountDownTimer(timer.leftTime, UNIT_S) {
-            val interval = UNIT_S
+        return object : CountDownTimer(timer.leftTime, INTERVAL) {
 
             override fun onTick(millisUntilFinished: Long) {
                 timer.leftTime = millisUntilFinished
-                if (timer.leftTime <= 0L) {
-                    listener.playSong()
-                    stopTimer(timer)
-                }
                 binding.stopwatchTimer.text = timer.leftTime.displayTime()
                 binding.customAnimation.setCurrent(millisUntilFinished)
+                listener.updateNotification(millisUntilFinished.displayTime())
             }
 
             override fun onFinish() {
+                timer.leftTime = 0L
+                listener.stop(timer.id, 0L)
+                listener.playSong()
+                listener.toastNotification("Timer number ${timer.id + 1} is over!!!")
+                stopTimer(timer)
+                binding.customAnimation.setCurrent(0)
                 binding.stopwatchTimer.text = timer.leftTime.displayTime()
             }
         }
+    }
+
+    private fun totalTimerStop(timer: Timer) {
+        listener.stop(timer.id, timer.leftTime)
+        stopTimer(timer)
     }
 
     private fun updateAnimation(timer: Timer) {
@@ -129,6 +123,7 @@ class TimerViewHolder(
             setCurrent(timer.leftTime)
         }
     }
+
     private fun setDraw(drawable: Drawable?) {
         binding.apply {
             startPauseButton.setImageDrawable(drawable)
@@ -139,12 +134,6 @@ class TimerViewHolder(
                 R.color.black, PorterDuff.Mode.SRC_IN
             )
         }
-    }
-
-    private companion object {
-
-        private const val START_TIME = "00:00:00"
-        private const val UNIT_S = 100L
     }
 
 }

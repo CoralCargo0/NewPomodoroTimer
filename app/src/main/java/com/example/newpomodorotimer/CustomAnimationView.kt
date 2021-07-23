@@ -17,7 +17,7 @@ class CustomAnimationView @JvmOverloads constructor(
     private var periodMs = 0L
     private var currentMs = 0L
     private var color = 0
-    private var style = FILL
+    private var stylE = FILL
     private val paint = Paint()
 
     init {
@@ -29,12 +29,12 @@ class CustomAnimationView @JvmOverloads constructor(
                 0
             )
             color = styledAttrs.getColor(R.styleable.CustomView_custom_color, Color.RED)
-            style = styledAttrs.getInt(R.styleable.CustomView_custom_style, FILL)
+            stylE = styledAttrs.getInt(R.styleable.CustomView_custom_style, FILL)
             styledAttrs.recycle()
         }
 
         paint.color = color
-        paint.style = if (style == FILL) Paint.Style.FILL else Paint.Style.STROKE
+        paint.style = if (stylE == FILL) Paint.Style.FILL else Paint.Style.STROKE
         paint.strokeWidth = 5F
     }
 

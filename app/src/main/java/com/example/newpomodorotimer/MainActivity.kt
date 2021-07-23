@@ -1,24 +1,46 @@
 package com.example.newpomodorotimer
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newpomodorotimer.databinding.ActivityMainBinding
 
 
-class MainActivity : AppCompatActivity(), TimerListener {
+class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
 
     private lateinit var binding: ActivityMainBinding
     private val timerAdapter = TimerAdapter(this)
     private val timers = mutableListOf<Timer>()
     private var nextId = 0
-    private var workingId = -1;
+    private var workingId = -1
+    private var working: Timer? = null
+    private var isPaused: Boolean = false
+
+
+    var builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_baseline_access_alarm_24)
+        .setAutoCancel(true)
+        .setContentTitle("Timer")
+        .setContentText("")
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setSilent(true)
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        createNotificationChannel()
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.apply {
@@ -51,26 +73,55 @@ class MainActivity : AppCompatActivity(), TimerListener {
         timers.add(
             Timer(
                 nextId++,
-                time ,
+                time,
                 time + 1,
-                false /*TimerViewHolder(binding, timelistener, binding.root.context.resources).getCountqwertyDownTimer(time))*/
+                false
             )
         )
         timerAdapter.submitList(timers.toList())
     }
 
-    override fun set(co: CountDownTimer, id: Int) {
-//        timers.find {
-//            it.id == id
-//        }?.timerCountDown = co
+    override fun onPause() {
+        isPaused = true
+        super.onPause()
     }
 
+    override fun onRestart() {
+
+        isPaused = false
+        super.onRestart()
+    }
+
+    override fun updateNotification(str: String) {
+        if (isPaused) {
+            builder
+                .setContentText(str)
+            with(NotificationManagerCompat.from(this)) {
+                notify(NOTIFICATION_ID, builder.build())
+            }
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create the NotificationChannel
+            val name = getString(R.string.channel_name)
+            val descriptionText = getString(R.string.channel_name)
+            val importance = NotificationManager.IMPORTANCE_LOW
+            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(mChannel)
+        }
+    }
 
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
         val newTimers = mutableListOf<Timer>()
         timers.forEach {
             if (it.id == id) {
-                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, it.time,  isStarted))
+                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, it.time, isStarted))
             } else {
                 newTimers.add(it)
             }
@@ -95,7 +146,14 @@ class MainActivity : AppCompatActivity(), TimerListener {
     override fun tryiop(id: Int): Int {
         val tmp = workingId
         workingId = id
-        return if(id == tmp) -1 else tmp
+        return if (id == tmp) -1 else tmp
+    }
+
+    override fun tryiopert(timer: Timer): Timer? {
+
+        val tmp = working
+        working = timer
+        return tmp
     }
 
     override fun onBackPressed() {
@@ -113,4 +171,5 @@ class MainActivity : AppCompatActivity(), TimerListener {
             }
         }.show()
     }
+
 }
