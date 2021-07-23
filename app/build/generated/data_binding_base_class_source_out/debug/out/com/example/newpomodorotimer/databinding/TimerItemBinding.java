@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.viewbinding.ViewBinding;
+import com.example.newpomodorotimer.CustomAnimationView;
 import com.example.newpomodorotimer.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -24,6 +25,9 @@ public final class TimerItemBinding implements ViewBinding {
   public final ImageView blinkingIndicator;
 
   @NonNull
+  public final CustomAnimationView customAnimation;
+
+  @NonNull
   public final ImageButton deleteButton;
 
   @NonNull
@@ -33,10 +37,11 @@ public final class TimerItemBinding implements ViewBinding {
   public final TextView stopwatchTimer;
 
   private TimerItemBinding(@NonNull CardView rootView, @NonNull ImageView blinkingIndicator,
-      @NonNull ImageButton deleteButton, @NonNull ImageButton startPauseButton,
-      @NonNull TextView stopwatchTimer) {
+      @NonNull CustomAnimationView customAnimation, @NonNull ImageButton deleteButton,
+      @NonNull ImageButton startPauseButton, @NonNull TextView stopwatchTimer) {
     this.rootView = rootView;
     this.blinkingIndicator = blinkingIndicator;
+    this.customAnimation = customAnimation;
     this.deleteButton = deleteButton;
     this.startPauseButton = startPauseButton;
     this.stopwatchTimer = stopwatchTimer;
@@ -75,6 +80,12 @@ public final class TimerItemBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.custom_animation;
+      CustomAnimationView customAnimation = rootView.findViewById(id);
+      if (customAnimation == null) {
+        break missingId;
+      }
+
       id = R.id.delete_button;
       ImageButton deleteButton = rootView.findViewById(id);
       if (deleteButton == null) {
@@ -93,8 +104,8 @@ public final class TimerItemBinding implements ViewBinding {
         break missingId;
       }
 
-      return new TimerItemBinding((CardView) rootView, blinkingIndicator, deleteButton,
-          startPauseButton, stopwatchTimer);
+      return new TimerItemBinding((CardView) rootView, blinkingIndicator, customAnimation,
+          deleteButton, startPauseButton, stopwatchTimer);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

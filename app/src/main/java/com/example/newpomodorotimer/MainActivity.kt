@@ -1,13 +1,14 @@
 package com.example.newpomodorotimer
 
 import android.media.MediaPlayer
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newpomodorotimer.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity(), TimerListener {
 
@@ -15,7 +16,7 @@ class MainActivity : AppCompatActivity(), TimerListener {
     private val timerAdapter = TimerAdapter(this)
     private val timers = mutableListOf<Timer>()
     private var nextId = 0
-
+    private var workingId = -1;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -36,11 +37,8 @@ class MainActivity : AppCompatActivity(), TimerListener {
         changeStopwatch(timer.id, timer.leftTime, true)
     }
 
-    override fun stop(id: Int, currentMs: Long) {
+    override fun stop(id: Int, currentMs: Long?) {
         changeStopwatch(id, currentMs, false)
-//        timers.find {
-//            it.id == id
-//        }?.timerCountDown?.cancel()
     }
 
     override fun delete(id: Int) {
@@ -49,9 +47,15 @@ class MainActivity : AppCompatActivity(), TimerListener {
     }
 
 
-
     override fun addNewTimer(time: Long) {
-        timers.add(Timer(nextId++, time, false /*TimerViewHolder(binding, timelistener, binding.root.context.resources).getCountqwertyDownTimer(time))*/))
+        timers.add(
+            Timer(
+                nextId++,
+                time ,
+                time + 1,
+                false /*TimerViewHolder(binding, timelistener, binding.root.context.resources).getCountqwertyDownTimer(time))*/
+            )
+        )
         timerAdapter.submitList(timers.toList())
     }
 
@@ -62,12 +66,11 @@ class MainActivity : AppCompatActivity(), TimerListener {
     }
 
 
-
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
         val newTimers = mutableListOf<Timer>()
         timers.forEach {
             if (it.id == id) {
-                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, isStarted))
+                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, it.time,  isStarted))
             } else {
                 newTimers.add(it)
             }
@@ -87,6 +90,12 @@ class MainActivity : AppCompatActivity(), TimerListener {
             this@MainActivity, text,
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    override fun tryiop(id: Int): Int {
+        val tmp = workingId
+        workingId = id
+        return if(id == tmp) -1 else tmp
     }
 
     override fun onBackPressed() {

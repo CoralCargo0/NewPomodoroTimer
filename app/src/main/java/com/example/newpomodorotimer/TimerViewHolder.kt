@@ -16,9 +16,9 @@ class TimerViewHolder(
     private val resources: Resources
 ) : RecyclerView.ViewHolder(binding.root) {
 
-   private var timerr: CountDownTimer? = null
-
+    private var timerr: CountDownTimer? = null
     fun bind(timer: Timer) {
+        updateAnimation(timer)
         binding.stopwatchTimer.text = timer.leftTime.displayTime()
 
         if (timer.isEnable) {
@@ -55,9 +55,16 @@ class TimerViewHolder(
 //            listener.set(it, timer.id)
 //            it.start()
 //        }
+        val calop = listener.tryiop(timer.id)
+        if (calop != -1) {
+            listener.stop(calop, null)
+        }  ///////////////////////////////
+        updateAnimation(timer)
+
         timerr?.cancel()
         timerr = getCountDownTimer(timer)
         timerr?.start()
+
 
         binding.blinkingIndicator.isInvisible = false
         (binding.blinkingIndicator.background as? AnimationDrawable)?.start()
@@ -69,6 +76,7 @@ class TimerViewHolder(
             resources,
             R.drawable.ic_baseline_play_arrow_24, null
         )
+        updateAnimation(timer)
         setDraw(drawable)
         timerr?.cancel()  ///timer.timerCountDown?.cancel()
         binding.blinkingIndicator.isInvisible = true
@@ -106,6 +114,7 @@ class TimerViewHolder(
                     stopTimer(timer)
                 }
                 binding.stopwatchTimer.text = timer.leftTime.displayTime()
+                binding.customAnimation.setCurrent(millisUntilFinished)
             }
 
             override fun onFinish() {
@@ -114,6 +123,12 @@ class TimerViewHolder(
         }
     }
 
+    private fun updateAnimation(timer: Timer) {
+        binding.customAnimation.apply {
+            setPeriod(timer.time)
+            setCurrent(timer.leftTime)
+        }
+    }
     private fun setDraw(drawable: Drawable?) {
         binding.apply {
             startPauseButton.setImageDrawable(drawable)
@@ -129,8 +144,7 @@ class TimerViewHolder(
     private companion object {
 
         private const val START_TIME = "00:00:00"
-        private const val UNIT_S = 1000L
-        private const val PERIOD = 1000L * 60L * 60L * 24L // Day
+        private const val UNIT_S = 100L
     }
 
 }
