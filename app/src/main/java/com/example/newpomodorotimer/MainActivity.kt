@@ -1,46 +1,29 @@
 package com.example.newpomodorotimer
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
 import android.media.MediaPlayer
-import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newpomodorotimer.databinding.ActivityMainBinding
 
 
-class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
+class MainActivity : AppCompatActivity(), TimerListener {
 
     private lateinit var binding: ActivityMainBinding
     private val timerAdapter = TimerAdapter(this)
     private val timers = mutableListOf<Timer>()
     private var nextId = 0
-    private var workingId = -1
-    private var working: Timer? = null
     private var isPaused: Boolean = false
-
-
-    var builder = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_baseline_access_alarm_24)
-        .setAutoCancel(true)
-        .setContentTitle("Timer")
-        .setContentText("")
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setSilent(true)
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        createNotificationChannel()
-        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.apply {
@@ -56,7 +39,7 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
     }
 
     override fun start(timer: Timer) {
-        changeStopwatch(timer.id, timer.leftTime, true)
+        changeStopwatch(timer.id, timer.remainingTime, true)
     }
 
     override fun stop(id: Int, currentMs: Long?) {
@@ -66,6 +49,7 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
     override fun delete(id: Int) {
         timers.remove(timers.find { it.id == id })
         timerAdapter.submitList(timers.toList())
+        if (timers.size < 11) binding.addNewStopwatchButton.isEnabled = true
     }
 
 
@@ -75,15 +59,12 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
                 nextId++,
                 time,
                 time + 1,
-                false
+                false,
+                null
             )
         )
         timerAdapter.submitList(timers.toList())
-    }
-
-    override fun onPause() {
-        isPaused = true
-        super.onPause()
+        if (timers.size >= 11) binding.addNewStopwatchButton.isEnabled = false
     }
 
     override fun onRestart() {
@@ -92,36 +73,49 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
         super.onRestart()
     }
 
-    override fun updateNotification(str: String) {
-        if (isPaused) {
-            builder
-                .setContentText(str)
-            with(NotificationManagerCompat.from(this)) {
-                notify(NOTIFICATION_ID, builder.build())
-            }
+    override fun onStop() {
+        super.onStop()
+        startTimerService()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopTimerService()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        stopTimerService()
+    }
+
+    private fun startTimerService() {
+        if (timers.find { it.isEnable } != null) {
+            val startIntent = Intent(this, ForegroundService::class.java)
+            startIntent.putExtra(COMMAND_ID, COMMAND_START)
+            startIntent.putExtra(STARTED_TIMER_TIME_MS, timers.find { it.isEnable }?.remainingTime)
+            startService(startIntent)
         }
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create the NotificationChannel
-            val name = getString(R.string.channel_name)
-            val descriptionText = getString(R.string.channel_name)
-            val importance = NotificationManager.IMPORTANCE_LOW
-            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
-            mChannel.description = descriptionText
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(mChannel)
-        }
+    private fun stopTimerService() {
+            val stopIntent = Intent(this, ForegroundService::class.java)
+            stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
+            startService(stopIntent)
     }
 
     private fun changeStopwatch(id: Int, currentMs: Long?, isStarted: Boolean) {
         val newTimers = mutableListOf<Timer>()
         timers.forEach {
             if (it.id == id) {
-                newTimers.add(Timer(it.id, currentMs ?: it.leftTime, it.time, isStarted))
+                newTimers.add(
+                    Timer(
+                        it.id,
+                        currentMs ?: it.remainingTime,
+                        it.time,
+                        isStarted,
+                        it.timerCountDown
+                    )
+                )
             } else {
                 newTimers.add(it)
             }
@@ -136,6 +130,21 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
         song.start()
     }
 
+    override fun vibration() {
+        val vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        val canVibrate: Boolean = vibrator.hasVibrator()
+        val milliseconds = 2500L
+
+        if (canVibrate) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    milliseconds,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+        }
+    }
+
     override fun toastNotification(text: String) {
         Toast.makeText(
             this@MainActivity, text,
@@ -143,17 +152,8 @@ class MainActivity : AppCompatActivity(), TimerListener, LifecycleObserver {
         ).show()
     }
 
-    override fun tryiop(id: Int): Int {
-        val tmp = workingId
-        workingId = id
-        return if (id == tmp) -1 else tmp
-    }
-
-    override fun tryiopert(timer: Timer): Timer? {
-
-        val tmp = working
-        working = timer
-        return tmp
+    override fun whatTimerIsEnable(timer: Timer): Timer? {
+        return timers.find{it.isEnable && timer != it}
     }
 
     override fun onBackPressed() {

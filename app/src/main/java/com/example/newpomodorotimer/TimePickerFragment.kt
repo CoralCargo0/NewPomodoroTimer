@@ -19,15 +19,11 @@ class TimePickerFragment : DialogFragment(), TimePickerDialog.OnTimeSetListener 
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val hour = 0
-        val minute = 15
-
+        val minute = 5
         return TimePickerDialog(activity, this, hour, minute, DateFormat.is24HourFormat(activity))
     }
 
     override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
-        timePasser.apply {
-            addNewTimer(((hourOfDay * 60 + minute) * 60000).toLong())
-        }
-
+        timePasser.addNewTimer(((hourOfDay * 60 + minute) * 60000).toLong())
     }
 }

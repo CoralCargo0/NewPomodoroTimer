@@ -10,11 +10,12 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="600dp"
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@id/add_new_stopwatch_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
         tools:listitem="@layout/timer_item" />
 
     <Button

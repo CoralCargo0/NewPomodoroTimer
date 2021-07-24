@@ -6,27 +6,22 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.net.wifi.WpsInfo.INVALID
-import android.os.Build
+import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import kotlinx.coroutines.*
 
 class ForegroundService : Service() {
 
     private var isServiceStarted = false
     private var notificationManager: NotificationManager? = null
-    private var job: Job? = null
+    private var countDownTimer: CountDownTimer? = null
 
     private val builder by lazy {
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Simple Timer")
+            .setContentTitle("Pomodoro Timer")
             .setGroup("Timer")
             .setGroupSummary(false)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(getPendingIntent())
             .setSilent(true)
             .setSmallIcon(R.drawable.ic_baseline_access_alarm_24)
     }
@@ -35,7 +30,6 @@ class ForegroundService : Service() {
         super.onCreate()
         notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-        startForegroundAndShowNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -65,6 +59,7 @@ class ForegroundService : Service() {
         Log.i("TAG", "commandStart()")
         try {
             moveToStartedState()
+
             startForegroundAndShowNotification()
             continueTimer(startTime)
         } finally {
@@ -72,38 +67,22 @@ class ForegroundService : Service() {
         }
     }
 
+
     private fun continueTimer(startTime: Long) {
-        job = GlobalScope.launch(Dispatchers.Main) {
-            while (true) {
-                notificationManager?.notify(
-                    NOTIFICATION_ID,
-                    getNotification(
-                        (System.currentTimeMillis() - startTime).displayTime().dropLast(3)
-                    )
+        countDownTimer = object : CountDownTimer(startTime, INTERVAL) {
+            override fun onTick(millisUntilFinished: Long) {
+                updateNotification(
+                    millisUntilFinished.displayTime()
                 )
-                delay(INTERVAL)
             }
-        }
-    }
 
-    private fun Long.displayTime(): String {
-        if (this <= 0L) {
-            return "00:00:00"
-        }
-        val h = this / 3600000
-        val m = (this / 60000) % 60
-        val s = this / 1000 % 60
-        // val ms = this % 1000 / 10
-
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}"
-    }
-
-    private fun displaySlot(count: Long): String {
-        return if (count / 10L > 0) {
-            "$count"
-        } else {
-            "0$count"
-        }
+            override fun onFinish() {
+                cancel()
+                updateNotification(
+                    "Timer is over!!!"
+                )
+            }
+        }.start()
     }
 
     private fun commandStop() {
@@ -112,7 +91,7 @@ class ForegroundService : Service() {
         }
         Log.i("TAG", "commandStop()")
         try {
-            job?.cancel()
+            countDownTimer?.cancel()
             stopForeground(true)
             stopSelf()
         } finally {
@@ -121,45 +100,40 @@ class ForegroundService : Service() {
     }
 
     private fun moveToStartedState() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Log.d("TAG", "moveToStartedState(): Running on Android O or higher")
-            startForegroundService(Intent(this, ForegroundService::class.java))
-        } else {
-            Log.d("TAG", "moveToStartedState(): Running on Android N or lower")
-            startService(Intent(this, ForegroundService::class.java))
-        }
+        Log.d("TAG", "moveToStartedState(): Running on Android O or higher")
+        startForegroundService(Intent(this, ForegroundService::class.java))
     }
 
     private fun startForegroundAndShowNotification() {
         createChannel()
-        val notification = getNotification("content")
+        val notification = getNotification("")
         startForeground(NOTIFICATION_ID, notification)
     }
 
     private fun getNotification(content: String) = builder.setContentText(content).build()
 
-
-    private fun createChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = "pomodoro"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val notificationChannel = NotificationChannel(
-                CHANNEL_ID, channelName, importance
-            )
-            notificationManager?.createNotificationChannel(notificationChannel)
-        }
+    fun updateNotification(message: String) {
+        notificationManager?.notify(
+            NOTIFICATION_ID,
+            getNotification(message)
+        )
     }
 
-    private fun getPendingIntent(): PendingIntent? {
-        val resultIntent = Intent(this, MainActivity::class.java)
-        resultIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-        return PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_ONE_SHOT)
+    private fun createChannel() {
+        val name = CHANNEL_NAME
+        val descriptionText = CHANNEL_DESC
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 
     private companion object {
-
         private const val CHANNEL_ID = "Channel_ID"
         private const val NOTIFICATION_ID = 777
-        private const val INTERVAL = 1000L
     }
 }

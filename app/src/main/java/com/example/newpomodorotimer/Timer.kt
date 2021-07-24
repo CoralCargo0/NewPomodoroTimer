@@ -4,8 +4,8 @@ import android.os.CountDownTimer
 
 data class Timer(
     val id: Int,
-    var leftTime: Long,
+    var remainingTime: Long,
     val time: Long,
     var isEnable: Boolean,
-//    val timerCountDown: CountDownTimer
+    var timerCountDown: CountDownTimer?
 )

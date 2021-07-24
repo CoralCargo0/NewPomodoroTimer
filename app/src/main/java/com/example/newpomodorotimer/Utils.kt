@@ -1,6 +1,7 @@
 package com.example.newpomodorotimer
 
 
+
 const val START_TIME = "00:00:00"
 const val INTERVAL = 100L
 const val INVALID = "INVALID"
@@ -8,11 +9,8 @@ const val COMMAND_START = "COMMAND_START"
 const val COMMAND_STOP = "COMMAND_STOP"
 const val COMMAND_ID = "COMMAND_ID"
 const val STARTED_TIMER_TIME_MS = "STARTED_TIMER_TIME"
-const val NOTIFICATION_ID = 8734
-const val CHANNEL_ID = "channelID"
-const val CHANNEL_NAME = "defaultNotification"
+const val CHANNEL_NAME = "Timers Channel"
 const val CHANNEL_DESC = "Using for timers"
-
 
 
 fun Long.displayTime(): String {
